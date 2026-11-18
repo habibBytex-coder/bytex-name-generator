@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#070913" />
+  <title>ByteX Name Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-primary: #070913;
+      --bg-card: rgba(17, 23, 46, 0.72);
+      --bg-input: rgba(10, 14, 30, 0.85);
+      --border-glass: rgba(114, 137, 255, 0.22);
+      --text-main: #f4f7ff;
+      --text-muted: #94a3b8;
+      --neon-cyan: #00f0ff;
+      --neon-purple: #8b5cf6;
+      --neon-blue: #3b82f6;
+      --gradient-brand: linear-gradient(135deg, #00f0ff 0%, #3b82f6 50%, #8b5cf6 100%);
+      --shadow-glow: 0 12px 32px -8px rgba(0, 240, 255, 0.28);
+    }
+
+    [data-theme="light"] {
+      --bg-primary: #eef2ff;
+      --bg-card: rgba(255, 255, 255, 0.86);
+      --bg-input: rgba(241, 245, 249, 0.95);
+      --border-glass: rgba(99, 102, 241, 0.2);
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --shadow-glow: 0 12px 28px -8px rgba(59, 130, 246, 0.22);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      min-height: 100dvh;
+      display: flex;
+      justify-content: center;
+      padding: 16px;
+      overflow-x: hidden;
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+
+    .bg-orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(75px);
+      z-index: -1;
+      opacity: 0.45;
+      pointer-events: none;
+    }
+    .orb-1 { width: 260px; height: 260px; background: var(--neon-purple); top: -60px; left: -60px; }
+    .orb-2 { width: 240px; height: 240px; background: var(--neon-cyan); bottom: -50px; right: -50px; }
+    .orb-3 { width: 200px; height: 200px; background: var(--neon-blue); top: 40%; left: 30%; opacity: 0.25; }
+
+    .app-shell { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 18px; }
+
+    .app-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 4px; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-logo {
+      width: 44px; height: 44px; border-radius: 12px; background: var(--gradient-brand);
+      display: grid; place-items: center; font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700; font-size: 1.15rem; color: #050814; box-shadow: var(--shadow-glow);
+    }
+    .brand-text h1 { font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; line-height: 1.1; }
+    .brand-text h1 span { background: var(--gradient-brand); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .brand-text p { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
+
+    .icon-btn {
+      width: 42px; height: 42px; border-radius: 12px; border: 1px solid var(--border-glass);
+      background: var(--bg-card); color: var(--text-main); display: grid; place-items: center; cursor: pointer;
+    }
+
+    .glass-card {
+      background: var(--bg-card); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-glass); border-radius: 20px; padding: 20px; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+    }
+
+    .workspace { display: flex; flex-direction: column; gap: 18px; }
+    .section-label { display: block; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 10px; }
+
+    .dropdown-wrapper { position: relative; margin-bottom: 16px; }
+    .country-trigger {
+      width: 100%; height: 52px; padding: 0 16px; border-radius: 14px; border: 1px solid var(--border-glass);
+      background: var(--bg-input); color: var(--text-main); display: flex; align-items: center; gap: 12px;
+      font-size: 1rem; font-weight: 600; cursor: pointer; text-align: left;
+    }
+    .selected-flag { font-size: 1.4rem; }
+    .selected-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .dropdown-menu {
+      position: absolute; top: calc(100% + 8px); left: 0; right: 0; background: var(--bg-primary);
+      border: 1px solid var(--neon-cyan); border-radius: 16px; z-index: 50; box-shadow: 0 20px 45px rgba(0, 0, 0, 0.55); overflow: hidden;
+    }
+    .search-box { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--border-glass); color: var(--text-muted); }
+    .search-box input { width: 100%; background: transparent; border: none; outline: none; color: var(--text-main); font-size: 0.95rem; }
+
+    .country-list { list-style: none; max-height: 240px; overflow-y: auto; overscroll-behavior: contain; }
+    .country-item {
+      padding: 12px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 0.95rem; border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+    .country-item:hover, .country-item.active { background: rgba(0, 240, 255, 0.14); }
+
+    .gender-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .gender-btn {
+      height: 48px; border-radius: 14px; border: 1px solid var(--border-glass); background: var(--bg-input);
+      color: var(--text-muted); font-size: 0.95rem; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;
+    }
+    .gender-btn.active {
+      border-color: var(--neon-cyan); color: var(--text-main); background: linear-gradient(135deg, rgba(0, 240, 255, 0.16), rgba(139, 92, 246, 0.18)); box-shadow: 0 0 20px rgba(0, 240, 255, 0.18);
+    }
+
+    .meta-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; font-size: 0.8rem; }
+    .badge { color: var(--neon-cyan); font-weight: 600; }
+    .counter { color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+    .name-box {
+      width: 100%; min-height: 118px; padding: 20px 16px; border-radius: 16px; border: 1px dashed rgba(0, 240, 255, 0.45);
+      background: var(--bg-input); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; cursor: pointer; margin-bottom: 16px;
+    }
+    .name-box:active { transform: scale(0.98); border-color: var(--neon-cyan); }
+    .generated-name { font-family: 'Space Grotesk', sans-serif; font-size: clamp(1.45rem, 6vw, 1.95rem); font-weight: 700; color: var(--text-main); text-align: center; word-break: break-word; }
+    .tap-hint { font-size: 0.75rem; color: var(--text-muted); }
+
+    .action-row { display: grid; grid-template-columns: 1fr 1.4fr; gap: 12px; }
+    .btn { height: 50px; border-radius: 14px; font-size: 0.95rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; border: none; }
+    .btn:active { transform: scale(0.97); }
+    .btn-secondary { background: var(--bg-input); color: var(--text-main); border: 1px solid var(--border-glass); }
+    .btn-primary { background: var(--gradient-brand); color: #050814; box-shadow: var(--shadow-glow); }
+
+    .loader-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; min-height: 220px; text-align: center; }
+    .spinner { width: 38px; height: 38px; border: 3px solid rgba(0, 240, 255, 0.2); border-top-color: var(--neon-cyan); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .empty-state { padding: 24px 16px; text-align: center; color: var(--text-muted); }
+    .empty-state p { font-weight: 600; color: var(--text-main); margin-bottom: 4px; }
+    .empty-state span { font-size: 0.8rem; }
+
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(90px);
+      background: #0f172a; color: #00f0ff; border: 1px solid #00f0ff; padding: 12px 20px; border-radius: 999px;
+      font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 8px; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+      opacity: 0; pointer-events: none; transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s ease; z-index: 100;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="bg-orb orb-1" aria-hidden="true"></div>
+  <div class="bg-orb orb-2" aria-hidden="true"></div>
+  <div class="bg-orb orb-3" aria-hidden="true"></div>
+
+  <main class="app-shell">
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-logo" aria-hidden="true"><span>BX</span></div>
+        <div class="brand-text">
+          <h1>ByteX <span>Name Generator</span></h1>
+          <p id="db-stats">Loading 195+ countries...</p>
+        </div>
+      </div>
+      <button id="theme-toggle" class="icon-btn" aria-label="Toggle Theme">
+        <svg id="theme-icon-sun" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path></svg>
+        <svg id="theme-icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+      </button>
+    </header>
+
+    <section id="loading-state" class="glass-card loader-card" aria-live="polite">
+      <div class="spinner"></div>
+      <p>Initializing 39,000+ Authentic Names...</p>
+    </section>
+
+    <section id="workspace" class="workspace hidden">
+      <div class="glass-card control-card">
+        <label class="section-label" for="country-search">Select Country (<span id="country-count">0</span> Available)</label>
+        
+        <div class="dropdown-wrapper" id="country-dropdown">
+          <button type="button" id="country-trigger" class="country-trigger" aria-expanded="false">
+            <span class="selected-flag" id="selected-flag">🇺🇸</span>
+            <span class="selected-name" id="selected-name">United States</span>
+            <svg class="chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </button>
+
+          <div class="dropdown-menu hidden" id="dropdown-menu">
+            <div class="search-box">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <input type="search" id="country-search" placeholder="Search 195 countries..." autocomplete="off" />
+            </div>
+            <ul id="country-list" class="country-list"></ul>
+            <div id="empty-search" class="empty-state hidden">
+              <p>No matching country found.</p>
+              <span>Try searching by country name (e.g., Bangladesh, Japan, Brazil)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="gender-grid">
+          <button type="button" id="btn-male" class="gender-btn active" data-gender="male">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="10" cy="14" r="5"></circle><line x1="19" y1="5" x2="13.6" y2="10.4"></line><polyline points="15 5 19 5 19 9"></polyline></svg>
+            Male
+          </button>
+          <button type="button" id="btn-female" class="gender-btn" data-gender="female">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="9" r="5"></circle><line x1="12" y1="14" x2="12" y2="21"></line><line x1="9" y1="18" x2="15" y2="18"></line></svg>
+            Female
+          </button>
+        </div>
+      </div>
+
+      <div class="glass-card display-card">
+        <div class="meta-bar">
+          <span class="badge" id="active-badge">🇺🇸 United States • Male</span>
+          <span class="counter" id="pool-counter">1 / 100</span>
+        </div>
+
+        <button type="button" id="name-display-btn" class="name-box" title="Tap to copy name">
+          <span id="generated-name" class="generated-name">Liam Smith</span>
+          <span class="tap-hint">Tap name to copy</span>
+        </button>
+
+        <div class="action-row">
+          <button type="button" id="btn-copy" class="btn btn-secondary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            Copy
+          </button>
+          <button type="button" id="btn-next" class="btn btn-primary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+            Next Name
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="copy-toast" class="toast" role="status" aria-live="polite">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+    <span>Copied Successfully!</span>
+  </div>
+
+  <script>
+    const CULTURE_POOLS = {
+      us_en: {
+        male: ["Liam","Noah","Oliver","James","Elijah","William","Henry","Lucas","Benjamin","Theodore","Mateo","Levi","Sebastian","Daniel","Jack","Michael","Alexander","Owen","Asher","Samuel","Ethan","Leo","Jackson","Mason","Ezra"],
+        female: ["Olivia","Emma","Charlotte","Amelia","Sophia","Isabella","Ava","Mia","Evelyn","Luna","Harper","Camila","Sofia","Scarlett","Elizabeth","Eleanor","Emily","Chloe","Mila","Violet","Penelope","Gianna","Aria","Abigail","Ella"],
+        surnames: ["Smith","Johnson","Williams","Brown","Jones","Garcia","Miller","Davis","Rodriguez","Martinez","Hernandez","Lopez","Gonzalez","Wilson","Anderson","Thomas","Taylor","Moore","Jackson","Martin","Lee","Perez","Thompson","White","Harris"]
+      },
+      uk_en: {
+        male: ["George","Arthur","Noah","Muhammad","Leo","Oscar","Harry","Archie","Henry","Charlie","Freddie","Theo","Alfie","Thomas","Lucas","William","Edward","Alexander","Jack","Isaac","Jude","Finley","Harrison","Sebastian","Max"],
+        female: ["Olivia","Amelia","Isla","Ava","Ivy","Freya","Lily","Florence","Mia","Willow","Rosie","Sophia","Grace","Poppy","Ella","Evie","Charlotte","Sienna","Evelyn","Phoebe","Elsie","Daisy","Millie","Matilda","Harper"],
+        surnames: ["Smith","Jones","Williams","Taylor","Davies","Brown","Wilson","Evans","Thomas","Johnson","Roberts","Walker","Wright","Robinson","Thompson","White","Hughes","Edwards","Green","Hall","Wood","Harris","Lewis","Martin","Clarke"]
+      },
+      ca_en_fr: {
+        male: ["Noah","Liam","William","Leo","Theodore","Oliver","Benjamin","Thomas","Lucas","Jack","Nathan","Jacob","Ethan","Gabriel","Logan","Samuel","Felix","Antoine","Raphael","Arthur","Henri","Louis","Charles","Edouard","Olivier"],
+        female: ["Olivia","Emma","Charlotte","Amelia","Sophia","Chloe","Mia","Ava","Lily","Zoe","Alice","Florence","Beatrice","Lea","Camille","Rosalie","Juliette","Clara","Maya","Hannah","Nora","Eleanor","Audrey","Claire","Gabrielle"],
+        surnames: ["Smith","Brown","Tremblay","Martin","Roy","Wilson","MacDonald","Gagnon","Johnson","Taylor","Cote","Campbell","Anderson","Leblanc","Lee","Jones","White","Williams","Bouchard","Gauthier","Morin","Lavoie","Fortin","Gagne","Ouellet"]
+      },
+      au_nz: {
+        male: ["Oliver","Noah","Leo","William","Henry","Jack","Theodore","Hudson","Charlie","Lucas","Thomas","Liam","Harrison","Harvey","Oscar","Archie","Elijah","Cooper","Lachlan","Hunter","Max","Levi","Xavier","Samuel","Isaac"],
+        female: ["Charlotte","Amelia","Isla","Olivia","Mia","Ava","Matilda","Ella","Grace","Willow","Harper","Chloe","Sienna","Lily","Hazel","Zoe","Sophie","Ruby","Evie","Evelyn","Violet","Scarlett","Aria","Ivy","Lucy"],
+        surnames: ["Smith","Jones","Williams","Brown","Wilson","Taylor","Johnson","White","Martin","Anderson","Thompson","Nguyen","Thomas","Walker","Harris","Lee","Ryan","Robinson","Kelly","King","Davis","Wright","Evans","Roberts","Green"]
+      },
+      bangladesh: {
+        male: ["Tanvir","Tahmid","Sajid","Rafiul","Mahmudul","Tariqul","Farhan","Nafis","Zarif","Ayman","Shakib","Tamim","Mushfiq","Mehedi","Taskin","Ariful","Rakibul","Zahidul","Ashraful","Kamrul","Saiful","Nazmul","Shafiqul","Anisur","Mizanur"],
+        female: ["Nusrat","Sadia","Tasnim","Farhana","Jannatul","Sumaiya","Fariha","Maliha","Nabila","Sabrina","Tanjina","Sharmin","Roksana","Moushumi","Sanjida","Afia","Humayra","Tahmina","Sultana","Mehjabin","Samira","Lamia","Raisa","Noshin","Bushra"],
+        surnames: ["Ahmed","Rahman","Hossain","Islam","Khan","Chowdhury","Uddin","Alam","Sarkar","Talukder","Bhuiyan","Siddiqui","Miah","Akter","Sultana","Begum","Karim","Mahmud","Hasan","Kabir","Quader","Mazumder","Patwary","Biswas","Haque"]
+      },
+      india_north: {
+        male: ["Aarav","Vihaan","Aditya","Sai","Arjun","Reyansh","Muhammad","Rohan","Krishna","Ishaan","Shaurya","Atharva","Advik","Pranav","Kabir","Ansh","Dev","Yash","Dhruv","Aryan","Rishabh","Siddharth","Karan","Rahul","Vikram"],
+        female: ["Aadhya","Ananya","Diya","Saanvi","Pari","Myra","Anika","Navya","Angel","Aarohi","Kavya","Riya","Shreya","Neha","Pooja","Priya","Sneha","Ishita","Nandini","Tanvi","Meera","Kritika","Divya","Swati","Sakshi"],
+        surnames: ["Sharma","Verma","Gupta","Singh","Kumar","Patel","Jain","Agarwal","Mishra","Tiwari","Pandey","Dubey","Chauhan","Yadav","Rathore","Joshi","Bansal","Mittal","Saxena","Srivastava","Malhotra","Kapoor","Khanna","Bhatia","Nair"]
+      },
+      india_south: {
+        male: ["Karthik","Prashanth","Vignesh","Suresh","Ramesh","Aravind","Naveen","Sandeep","Harish","Deepak","Ganesh","Mahesh","Rajesh","Dinesh","Santosh","Ashwin","Nitin","Rohit","Varun","Tarun","Gautam","Manoj","Anand","Venkatesh","Balaji"],
+        female: ["Lakshmi","Divya","Kavitha","Deepika","Swathi","Ramya","Sindhu","Keerthi","Pavithra","Aishwarya","Shruthi","Bhavana","Anusha","Harini","Vaishnavi","Meenakshi","Padma","Geetha","Revathi","Sangeetha","Sowmya","Nithya","Vidya","Archana","Chitra"],
+        surnames: ["Reddy","Naidu","Rao","Menon","Pillai","Iyer","Iyengar","Subramanian","Krishnan","Murthy","Shetty","Hegde","Kulkarni","Deshmukh","Patil","Gowda","Chettiar","Nadar","Varma","Bhat","kamath","Pai","Prabhu","Shenoy","Acharya"]
+      },
+      pakistan: {
+        male: ["Muhammad","Ahmed","Ali","Usman","Bilal","Hamza","Zain","Hassan","Hussain","Umar","Tariq","Faisal","Imran","Kamran","Salman","Adnan","Waqas","Fahad","Saad","Talha","Danish","Asad","Haris","Rizwan","Farhan"],
+        female: ["Ayesha","Fatima","Zainab","Maryam","Khadija","Amina","Hira","Sana","Iqra","Mahnoor","Nimra","Rabia","Sidra","Anum","Bushra","Farah","Hina","Kiran","Mehwish","Nadia","Sadia","Samina","Shazia","Uzma","Zoya"],
+        surnames: ["Khan","Ahmed","Ali","Malik","Butt","Sheikh","Chaudhry","Raja","Qureshi","Siddiqui","Mirza","Syed","Abbasi","Awan","Bhatti","Gondal","Hashmi","Janjua","Kiani","Mughal","Rana","Rehman","Tariq","Zafar","Zaidi"]
+      },
+      japan: {
+        male: ["Haruto","Riku","Haru","Hinata","Kaito","Asahi","Sora","Ren","Minato","Itsuki","Yuto","Aoi","Kota","Ryo","Daiki","Kenta","Takumi","Shota","Kenji","Naoki","Taro","Jiro","Hiroshi","Kazuki","Shinji"],
+        female: ["Himari","Hina","Yua","Sakura","Ichika","Akari","Sara","Yui","Aoi","Mio","Rin","Koharu","Mei","Hana","Riko","Nanami","Yuna","Ayaka","Misaki","Haruka","Natsuki","Kana","Emi","Miyu","Chihiro"],
+        surnames: ["Sato","Suzuki","Takahashi","Tanaka","Watanabe","Ito","Yamamoto","Nakamura","Kobayashi","Kato","Yoshida","Yamada","Sasaki","Yamaguchi","Matsumoto","Inoue","Kimura","Hayashi","Shimizu","Yamazaki","Mori","Abe","Ikeda","Hashimoto","Ishikawa"]
+      },
+      korea: {
+        male: ["Min-jun","Seo-jun","Do-yun","Ye-jun","Si-woo","Ha-joon","Ji-ho","Ju-won","Ji-hu","Jun-seo","Hyun-woo","Ji-hoon","Geon-woo","Woo-jin","Seon-woo","Min-jae","Hyeon-jun","Jin-woo","Sung-min","Jae-hyun","Dong-hyun","Tae-yang","Seung-min","Kyung-soo","Young-ho"],
+        female: ["Seo-yeon","Seo-yun","Ji-woo","Seo-hyeon","Ha-eun","Ha-yoon","Min-seo","Ji-yoo","Yun-seo","Chae-won","Ji-min","Su-bin","Ji-ah","Da-eun","Ye-eun","Soo-jin","Eun-bi","Hye-jin","Bo-ram","Na-yeon","Yoon-ji","Seul-gi","Joo-hyun","So-yeon","Mi-young"],
+        surnames: ["Kim","Lee","Park","Choi","Jung","Kang","Cho","Yoon","Jang","Lim","Han","Oh","Seo","Shin","Kwon","Hwang","Ahn","Song","Yoo","Hong","Jeon","Go","Moon","Yang","Son"]
+      },
+      china: {
+        male: ["Wei","Jie","Hao","Yi","Jun","Feng","Lei","Yang","Ming","Chao","Yong","Qiang","Bo","Tao","Gang","Jian","Bin","Peng","Xiong","Lin","Zhi","Kai","Rui","Cheng","Yu"],
+        female: ["Fang","Jing","Min","Yan","Li","Juan","Lan","Ying","Hui","Mei","Xiu","Na","Ping","Dan","Ting","Lin","Qian","Yu","Xin","Rong","Hong","Xia","Wen","Zhen","Qing"],
+        surnames: ["Wang","Li","Zhang","Liu","Chen","Yang","Huang","Zhao","Wu","Zhou","Xu","Sun","Ma","Zhu","Hu","Guo","He","Lin","Luo","Gao","Zheng","Liang","Xie","Song","Tang"]
+      },
+      vietnam: {
+        male: ["Minh","Anh","Huy","Hoang","Duc","Tuan","Dung","Nam","Khanh","Quang","Hai","Son","Long","Dat","Hung","Thanh","Cuong","Trung","Kien","Phuc","Bao","Vinh","Thinh","Loc","Phat"],
+        female: ["Anh","Linh","Trang","Phuong","Huong","Thao","Ha","Huyen","Ngoc","Lan","Mai","Nga","Thu","Hang","Quynh","Van","Nhung","Chi","Vy","Tram","yen","My","Han","Nhu","Diem"],
+        surnames: ["Nguyen","Tran","Le","Pham","Hoang","Huynh","Phan","Vu","Vo","Dang","Bui","Do","Ho","Ngo","Duong","Ly","Dinh","Trinh","Dao","Doan","Vuong","Truong","Mai","Ha","Luu"]
+      },
+      thailand: {
+        male: ["Somchai","Somsak","Arthit","Kittisak","Nattapong","Thanawat","Chaiwat","Pongsakorn","Wichai","Surachai","Anucha","Prasert","Narong","Sompong","Thanakorn","Kritsada","Worawit","Jirayu","Piyapong","Sarawut","Noppadol","Adisak","Kriangsak","Boonmee","Chatchai"],
+        female: ["Siriporn","Sumalee","Sunee","Ratana","Pornthip","Kanya","Malee","Wipa","Nittaya","Pensri","Wanida","Jintana","Orathai","Supaporn","Duangjai","Kannika","Chutima","Narumol","Wilai","Pranee","Pimchanok","Natthida","Ploy","Kamonchanok","Patcharin"],
+        surnames: ["Saetang","Saelim","Charoenporn","Rattanakosin","Suwannapong","Chanthavong","Wongsuwan","Srisai","Boonma","Thongchai","Siriwat","Chaiyaporn","Phonphimai","Khamphoui","Somboon","Panyarachun","Shinawatra","Vejjajiva","Choonhavan","Kridakorn","Devakul","Snidvongs"," Bunnag","Amatayakul","Chotikapukkana"]
+      },
+      indonesia_my: {
+        male: ["Budi","Agus","Ahmad","Muhammad","Rizky","Putra","Dimas","Eko","Hendra","Adi","Dedi","Fajar","Irfan","Reza","Arif","Bambang","Wahyu","Joko","Surya","Bayu","Ilham","Farhan","Hafiz","Zul","Amir"],
+        female: ["Siti","Sri","Ayu","Putri","Nur","Dewi","Rina","Fitri","Nisa","Ratna","Indah","Wulan","Dian","Maya","Lestari","Nadia","Anisa","Aisyah","Farah","Intan","Kartika","Melati","Nabila","Rahma","Yuni"],
+        surnames: ["Saputra","Wijaya","Susanto","Hidayat","Santoso","Kurniawan","Pratama","Setiawan","Nugroho","Suryadi","Siregar","Nasution","Harahap","Lubis","Simanjuntak","Tan","Lim","Wong","Lee","Abdullah","Ibrahim","Ismail","Yusof","Hassan","Rahman"]
+      },
+      philippines: {
+        male: ["Juan","Jose","Mark","John","Christian","Angelo","Gabriel","Joshua","Rafael","Miguel","Carlos","Luis","Antonio","Francis","Daniel","Kenneth","Ryan","Kevin","Jerome","Patrick","Jayson","Bryan","Alvin","Dennis","Rodel"],
+        female: ["Maria","Mary","Angela","Nicole","Andrea","Camille","Jasmine","Bea","Bianca","Katrina","Michelle","Christine","Jenny","Grace","Joy","Rose","Ann","Mae","Clarissa","Erica","Patricia","Samantha","Trisha","Vanessa","Angelica"],
+        surnames: ["Santos","Reyes","Cruz","Bautista","Ocampo","Garcia","Mendoza","Torres","Tomas","Andrada","Castillo","Flores","Villanueva","Ramos","Castro","Rivera","Aquino","Navarro","Salazar","Mercado","Dela Cruz","Gomez","Morales","Fernandez","Pascual"]
+      },
+      germany_at_ch: {
+        male: ["Noah","Matteo","Elias","Finn","Leon","Theo","Paul","Emil","Luca","Henry","Ben","Louis","Felix","Maximilian","Jonas","Lukas","Julian","Anton","Oskar","Liam","Jakob","David","Moritz","Alexander","Niklas"],
+        female: ["Emilia","Hannah","Sophia","Emma","Mia","Mila","Lina","Ella","Klara","Lea","Marie","Lena","Anna","Amelie","Luisa","Johanna","Frieda","Mathilda","Charlotte","Ida","Greta","Maja","Nele","Paula","Sarah"],
+        surnames: ["Muller","Schmidt","Schneider","Fischer","Weber","Meyer","Wagner","Becker","Schulz","Hoffmann","Schafer","Koch","Bauer","Richter","Klein","Wolf","Schroder","Neumann","Schwarz","Zimmermann","Braun","Kruger","Hofmann","Hartmann","Lange"]
+      },
+      france_be: {
+        male: ["Gabriel","Leo","Raphael","Louis","Noah","Jules","Arthur","Adam","Lucas","Liam","Sacha","Aaron","Leon","Gabin","Hugo","Paul","Nathan","Ethan","Malo","Tom","Mohamed","Theo","Noe","Mathis","Antoine"],
+        female: ["Jade","Louise","Ambre","Alba","Emma","Rose","Alice","Romy","Anna","Lina","Mia","Lena","Lou","Julia","Chloe","Agathe","Ines","Iris","Lea","Manon","Jeanne","Juliette","Camille","Eva","Zoe"],
+        surnames: ["Martin","Bernard","Thomas","Petit","Robert","Richard","Durand","Dubois","Moreau","Laurent","Simon","Michel","Lefebvre","Leroy","Roux","David","Bertrand","Morel","Fournier","Girard","Bonnet","Dupont","Lambert","Fontaine","Rousseau"]
+      },
+      italy: {
+        male: ["Leonardo","Francesco","Tommaso","Edoardo","Alessandro","Lorenzo","Mattia","Gabriele","Riccardo","Andrea","Diego","Matteo","Nicolo","Giuseppe","Antonio","Federico","Giovanni","Filippo","Davide","Pietro","Marco","Luca","Simone","Samuele","Christian"],
+        female: ["Sofia","Aurora","Giulia","Ginevra","Beatrice","Alice","Vittoria","Emma","Ludovica","Matilde","Giorgia","Camilla","Chiara","Anna","Bianca","Nicole","Gaia","Martina","Greta","Azzurra","Sara","Arianna","Noemi","Rebecca","Elena"],
+        surnames: ["Rossi","Russo","Ferrari","Esposito","Bianchi","Romano","Colombo","Ricci","Marino","Greco","Bruno","Gallo","Conti","De Luca","Mancini","Costa","Giordano","Rizzo","Lombardi","Moretti","Barbieri","Fontana","Santoro","Mariani","Rinaldi"]
+      },
+      spain: {
+        male: ["Hugo","Mateo","Martin","Lucas","Leo","Daniel","Alejandro","Manuel","Pablo","Alvaro","Adrian","Enzo","Mario","Diego","David","Oliver","Marcos","Thiago","Marco","Alex","Javier","Izan","Bruno","Miguel","Antonio"],
+        female: ["Lucia","Sofia","Martina","Valeria","Maria","Julia","Paula","Emma","Olivia","Daniela","Carla","Alma","Mia","Carmen","Vega","Lara","Sara","Alba","Jimena","Noa","Chloe","Aitana","Claudia","Elena","Valentina"],
+        surnames: ["Garcia","Rodriguez","Gonzalez","Fernandez","Lopez","Martinez","Sanchez","Perez","Gomez","Martin","Jimenez","Ruiz","Hernandez","Diaz","Moreno","Munoz","Alvarez","Romero","Alonso","Gutierrez","Navarro","Torres","Dominguez","Vazquez","Ramos"]
+      },
+      portugal_br: {
+        male: ["Miguel","Arthur","Gael","Theo","Heitor","Ravi","Davi","Bernardo","Noah","Gabriel","Samuel","Pedro","Antonio","Joao","Isaac","Lucas","Matheus","Lucas","Rafael","Guilherme","Enzo","Nicolas","Lorenzo","Gustavo","Felipe"],
+        female: ["Helena","Alice","Laura","Maria","Sophia","Manuela","Maite","Liz","Cecilia","Isabella","Luisa","Eloa","Heloisa","Julia","Ayla","Mariah","Maya","Valentina","Chloe","Antonella","Livia","Mariana","Beatriz","Clara","Ana"],
+        surnames: ["Silva","Santos","Oliveira","Souza","Rodrigues","Ferreira","Alves","Pereira","Lima","Gomes","Costa","Ribeiro","Martins","Carvalho","Almeida","Lopes","Soares","Fernandes","Vieira","Barbosa","Rocha","Dias","Nascimento","Andrade","Moreira"]
+      },
+      netherlands: {
+        male: ["Noah","Liam","Luca","Lucas","Mees","Finn","James","Milan","Levi","Sem","Sam","Daan","Noud","Luuk","Bram","Zayn","Adam","Mason","Benjamin","Olivier","Thomas","Jesse","Max","Thijs","Julian"],
+        female: ["Emma","Julia","Mila","Sophie","Olivia","Yara","Saar","Nora","Tess","Liv","Zoey","Evi","Lotte","Sara","Eva","Anna","Lieke","Fleur","Isa","Lauren","Lynn","Roos","Maud","Nina","Sofie"],
+        surnames: ["De Jong","Jansen","De Vries","Van den Berg","Van Dijk","Bakker","Janssen","Visser","Smit","Meijer","De Boer","Mulder","De Groot","Bos","Vos","Peters","Hendriks","Van Leeuwen","Dekker","Brouwer","De Wit","Dijkstra","Smits","De Graaf","Van der Meer"]
+      },
+      nordic: {
+        male: ["Noah","William","Liam","Hugo","Lucas","Adam","Oliver","Matteo","Frans","Elias","Aksel","Emil","Jakob","Filip","Oskar","Viktor","Alfred","Nils","Leo","Isak","Kasper","Sander","Mikkel","Magnus","Tobias"],
+        female: ["Astrid","Maja","Alma","Vera","Freja","Leah","Ella","Nora","Olivia","Emma","Alice","Selma","Saga","Wilma","Ebba","Clara","Alva","Lilly","Signe","Agnes","Ingrid","Sofie","Frida","Emilie","Ida"],
+        surnames: ["Andersson","Johansson","Karlsson","Nilsson","Eriksson","Larsson","Olsson","Persson","Svensson","Gustafsson","Hansen","Johansen","Olsen","Larsen","Andersen","Pedersen","Nilsen","Kristiansen","Jensen","Nielsen","Moller","Lindqvist","Virtanen","Korhonen","Makinen"]
+      },
+      poland_cz_sk: {
+        male: ["Antoni","Jan","Aleksander","Nikodem","Franciszek","Jakub","Leon","Mikolaj","Stanislaw","Filip","Wojciech","Adam","Kacper","Tymon","Marcel","Szymon","Piotr","Michal","Mateusz","Tomasz","Krzysztof","Marek","Lukasz","Pawel","Dawid"],
+        female: ["Zofia","Zuzanna","Maja","Hanna","Laura","Julia","Oliwia","Alicja","Pola","Lena","Maria","Emilia","Antonina","Wiktoria","Amelia","Liliana","Klara","Gabriela","Nadia","Aleksandra","Natalia","Karolina","Anna","Katarzyna","Magdalena"],
+        surnames: ["Nowak","Kowalski","Wisniewski","Wojcik","Kowalczyk","Kaminski","Lewandowski","Zielinski","Szymanski","Wozniak","Dabrowski","Kozlowski","Jankowski","Mazur","Kwiatkowski","Novak","Svoboda","Novotny","Dvorak","Cerny","Prochazka","Kucera","Vesely","Horak","Nemec"]
+      },
+      russia_east_slav: {
+        male: ["Aleksandr","Mikhail","Maksim","Lev","Artem","Mark","Ivan","Dmitriy","Matvey","Daniil","Kirill","Andrey","Egor","Ilya","Aleksey","Roman","Sergey","Vladislav","Timofey","Nikita","Pavel","Konstantin","Vladimir","Yaroslav","Gleb"],
+        female: ["Sofiya","Eva","Anna","Mariya","Viktoriya","Alisa","Polina","Varvara","Aleksandra","Vasilisa","Anastasiya","Kseniya","Milana","Veronika","Elizaveta","Arina","Darya","Valeriya","Ekaterina","Yuliya","Tatyana","Olga","Natalya","Irina","Svetlana"],
+        surnames: ["Ivanov","Smirnov","Kuznetsov","Popov","Vasiliev","Petrov","Sokolov","Mikhailov","Novikov","Fedorov","Morozov","Volkov","Alekseev","Lebedev","Semenov","Egorov","Pavlov","Kozlov","Stepanov","Nikolaev","Orlov","Andreev","Makarov","Nikitin","Zakharov"]
+      },
+      balkans_gr: {
+        male: ["Luka","Stefan","Nikola","Marko","Aleksandar","Filip","Jovan","Nemanja","Milos","Uros","Georgios","Dimitrios","Konstantinos","Ioannis","Nikolaos","Panagiotis","Vasileios","Christos","Athanasios","Alexandros","Andrei","Alexandru","Gabriel","Ionut","Cristian"],
+        female: ["Sofija","Dunja","Mila","Teodora","Sara","Masa","Una","Tara","Elena","Maria","Eleni","Aikaterini","Vasiliki","Sofia","Angeliki","Georgia","Dimitra","Konstantina","Ioanna","Anastasia","Ana","Andreea","Ioana","Gabriela","Alexandra"],
+        surnames: ["Jovanovic","Petrovic","Nikolic","Markovic","Djordjevic","Stojanovic","Ilic","Stankovic","Pavlovic","Milosevic","Papadopoulos","Vlahos","Angelopoulos","Nikolaidis","Georgiou","Petridis","Oikonomou","Papageorgiou","Popescu","Ionescu","Popa","Radu","Dumitru","Stan","Stoica"]
+      },
+      turkey_caucasus: {
+        male: ["Alparslan","Yusuf","Miraç","Goktug","Omer","Eymen","Aras","Kerem","Mustafa","Ahmet","Mehmet","Ali","Emir","Hamza","Burak","Can","Deniz","Emre","Murat","Hakan","Giorgi","Davit","Nikoloz","Luka","Sandro"],
+        female: ["Asel","Zeynep","Defne","Zumra","Asya","Elif","Ecrin","Nehir","Azra","Miray","Eylul","Ela","Ada","Meryem","Ayse","Fatma","Selin","Melis","Esra","Busra","Nino","Mariam","Ana","Tamar","Elene"],
+        surnames: ["Yilmaz","Kaya","Demir","Celik","Sahin","Yildiz","Yildirim","Ozturk","Aydin","Ozdemir","Arslan","Dogan","Kilic","Aslan","Cetin","Kara","Koc","Kurt","Ozkan","Simsek","Polat","Korkmaz","Cakir","Erdogan","Beridze"]
+      },
+      arab_mena: {
+        male: ["Muhammad","Ahmed","Omar","Ali","Youssef","Ibrahim","Khaled","Tariq","Zayd","Hamza","Mustafa","Mahmoud","Hassan","Hussein","Kareem","Rami","Sami","Fadi","Nasser","Rashid","Sultan","Faisal","Abdullah","Salman","Majid"],
+        female: ["Fatima","Aisha","Maryam","Zainab","Noor","Sara","Layla","Salma","Hana","Jana","Malak","Rana","Dina","Reem","Amira","Yasmin","Lina","Maya","Nadia","Rasha","Samira","Huda","Mona","Farah","Yara"],
+        surnames: ["Al-Mansoor","Al-Harbi","Al-Qahtani","Al-Otaibi","Al-Zahrani","Al-Ghamdi","Al-Shehri","Al-Dosari","Al-Mutairi","Al-Shammari","Haddad","Khoury","Mansour","Nassar","Saleh","Ibrahim","Hassan","Hussein","Mahmoud","Abdullah","Farouk","Darwish","Barakat","Salama","Hamdan"]
+      },
+      iran_afg_tj: {
+        male: ["Amir","Ali","Hossein","Mohammad","Reza","Mahdi","Mehdi","Saeed","Hamid","Majid","Nima","Kian","Arash","Sina","Pouya","Navid","Babak","Behnam","Dariush","Farhad","Kamran","Omid","Peyman","Ramin","Shahram"],
+        female: ["Fatemeh","Zahra","Maryam","Sara","Narges","Zeynab","Reyhaneh","Hasti","Nazanin","Mahsa","Parisa","Shirin","Niloufar","Tara","Bahar","Donya","Elham","Fariba","Ghazal","Leila","Mina","Mitra","Negar","Roya","Sepideh"],
+        surnames: ["Mohammadi","Hosseini","Ahmadi","Moradi","Karimi","Mousavi","Jafari","Sadeghi","Rahimi","Rezaei","Hashemi","Salehi","Najafi","Ghasemi","Kazemi","Heidari","Taheri","Rostami","Soleimani","Sharifi","Zare","Bahrami","Alizadeh","Amiri","Ebrahimi"]
+      },
+      east_africa_sw: {
+        male: ["Juma","Baraka","Amani","Bakari","Hassan","Salim","Hamisi","Rashid","Rajabu","Musa","Ibrahim","Omari","Said","Ally","Issa","Kelvin","Brian","Dennis","Emmanuel","Joseph","John","Peter","David","Samuel","Daniel"],
+        female: ["Amina","Fatuma","Zainab","Halima","Mariam","Asha","Neema","Rehema","Upendo","Furaha","Zawadi","Salma","Khadija","Mwanahamisi","Mwajuma","Grace","Faith","Joyce","Esther","Mary","Sarah","Elizabeth","Beatrice","Agnes","Catherine"],
+        surnames: ["Mwangi","Kamau","Ochieng","Otieno","Njoroge","Kariuki","Kimani","Odhiambo","Wanjiku","Kiprop","Mushi","Massawe","Swai","Minja","Shirima","Komba","Ngowi","Chacha","Mwakipesile","Sanga","Msangi","Lyimo","Urassa","Mollel","Kileo"]
+      },
+      west_africa: {
+        male: ["Chinedu","Emeka","Oluwaseun","Adebayo","Tunde","Chukwudi","Ibrahim","Musa","Abubakar","Sani","Kwame","Kofi","Kwesi","Yaw","Kojo","Mamadou","Ousmane","Amadou","Ibrahima","Sekou","Cheikh","Modou","Abdoulaye","Moussa","Boubacar"],
+        female: ["Ngozi","Chidinma","Amina","Zainab","Fatima","Aisha","Funmilayo","Yetunde","Abisola","Temitope","Ama","Akosua","Abena","Efua","Adwoa","Fatou","Aminata","Mariama","Awa","Kadiatou","Binta","Oumou","Hawa","Nafissatou","Ramatoulaye"],
+        surnames: ["Okafor","Adeyemi","Balogun","Ogunleye","Eze","Nwosu","Okeke","Ibrahim","Abubakar","Bello","Mensah","Owusu","Boateng","Appiah","Asante","Diallo","Traore","Camara","Conde","Keita","Ndiaye","Fall","Sow","Ba","Gueye"]
+      },
+      southern_africa: {
+        male: ["Thabo","Sipho","Bongani","Mandla","Sibusiso","Kabelo","Tshepo","Katlego","Lesedi","Lethabo","Bandile","Siyabonga","Nkosinathi","Themba","Vusi","Liam","Ethan","Aiden","Lucas","Jayden","Pieter","Johannes","Hendrik","Willem","Francois"],
+        female: ["Lerato","Thandiwe","Naledi","Zanele","Nomvula","Precious","Amahle","Melokuhle","Lesedi","Rethabile","Buhle","Lindiwe","Ayanda","Nokuthula","Busisiwe","Mia","Emily","Chloe","Emma","Hannah","Annelize","Marlene","Chantelle","Sunette","Liezel"],
+        surnames: ["Dlamini","Nkosi","Ndlovu","Khumalo","Mokoena","Molefe","Mahlangu","Mthembu","Zungu","Sithole","Van der Merwe","Botha","Pretorius","Jacobs","Fourie","Du Plessis","Venter","Coetzee","Nel","Smit","Moyo","Ncube","Sibanda","Phiri","Banda"]
+      },
+      horn_africa: {
+        male: ["Dawit","Yohannes","Bereket","Nahom","Abel","Natnael","Henok","Samuel","Robel","Eyob","Kidus","Biniam","Surafel","Tewodros","Biruk","Mohamed","Ahmed","Abdi","Hassan","Ali","Omar","Ibrahim","Farah","Ismail","Yusuf"],
+        female: ["Selam","Hanna","Bethlehem","Meron","Rahel","Tigist","Frehiwot","Meseret","Kalkidan","Mahlet","Eden","Tsion","Ruth","Rediet","Hiwot","Fadumo","Halima","Amina","Sahra","Hodan","Khadija","Maryan","Asha","Hawa","Zahra"],
+        surnames: ["Tesfaye","Tadesse","Bekele","Kebede","Alemu","Getachew","Haile","Mekonnen","Girma","Assefa","Desta","Negash","Solomon","Gebre","Wolde","Hassan","Mohamed","Ali","Abdi","Farah","Ibrahim","Omar","Hussein","Ismail","Warsame"]
+      },
+      latin_america: {
+        male: ["Santiago","Mateo","Sebastian","Leonardo","Matias","Emiliano","Diego","Daniel","Miguel","Alexander","Alejandro","Nicolas","Samuel","Gabriel","Julian","Lucas","Emmanuel","David","Carlos","Juan","Jose","Luis","Fernando","Ricardo","Eduardo"],
+        female: ["Sofia","Valentina","Regina","Camila","Valeria","Ximena","Maria","Victoria","Renata","Natalia","Isabella","Luciana","Mariana","Daniela","Gabriela","Andrea","Fernanda","Paula","Elena","Alejandra","Carolina","Adriana","Patricia","Monica","Claudia"],
+        surnames: ["Hernandez","Garcia","Martinez","Lopez","Gonzalez","Perez","Rodriguez","Sanchez","Ramirez","Cruz","Flores","Gomez","Morales","Vazquez","Reyes","Jimenez","Torres","Diaz","Gutierrez","Ruiz","Mendoza","Aguilar","Ortiz","Moreno","Castillo"]
+      },
+      caribbean: {
+        male: ["Jayden","Malik","Devon","Andre","Kemar","Jermaine","Ricardo","Dwayne","Shane","Damian","Romario","Kevon","Tariq","Akeem","Jalen","Carlos","Jose","Luis","Miguel","Rafael","Jean","Pierre","Marc","Luc","Fritz"],
+        female: ["Brianna","Shanice","Kadian","Tashana","Keisha","Tamara","Latoya","Monique","Simone","Nadine","Aaliyah","Gabrielle","Danielle","Ashley","Crystal","Maria","Carmen","Rosa","Ana","Elena","Marie","Claire","Anne","Sophie","Line"],
+        surnames: ["Brown","Campbell","Williams","Smith","Johnson","Clarke","Grant","Reid","Blake","Gordon","Thompson","Anderson","Davis","Lewis","Thomas","Rodriguez","Perez","Martinez","Gonzalez","Hernandez","Jean","Pierre","Louis","Joseph","Charles"]
+      },
+      pacific: {
+        male: ["Sione","Tevita","Viliami","Semisi","Pita","Taniela","Paula","Maka","Tama","Wiremu","Nikau","Ariki","Kauri","Manaia","Tane","Josaia","Ratu","Iliesa","Epeli","Peni","Waisale","Apisalome","Samuela","Lote","Seremaia"],
+        female: ["Mele","Ana","Sela","Luseane","Salote","losaline","Alisi","Fina","Aroha","Maia","Anahera","Kahu","Hine","Tia","Marama","Mere","Adi","Salaseini","Litiana","Lavenia","Vasiti","Losalini","Asinate","Elenoa","Sera"],
+        surnames: ["Tupou","Vaea","Fifita","Latu","Finau","Taufa","Tuivakano","Moala","Kava","Havea","Smith","Williams","Brown","Wilson","Taylor","Naivalu","Ratu","Bainimarama","Rabuka","Qarase","Mara","Ganilau","Cakobau","Nawaqanitawase","Koroibete"]
+      }
+    };
+
+    const COUNTRIES_LIST = [
+      ["Afghanistan","AF","iran_afg_tj"],["Albania","AL","balkans_gr"],["Algeria","DZ","arab_mena"],["Andorra","AD","spain"],
+      ["Angola","AO","portugal_br"],["Antigua and Barbuda","AG","caribbean"],["Argentina","AR","latin_america"],["Armenia","AM","turkey_caucasus"],
+      ["Australia","AU","au_nz"],["Austria","AT","germany_at_ch"],["Azerbaijan","AZ","turkey_caucasus"],["Bahamas","BS","caribbean"],
+      ["Bahrain","BH","arab_mena"],["Bangladesh","BD","bangladesh"],["Barbados","BB","caribbean"],["Belarus","BY","russia_east_slav"],
+      ["Belgium","BE","france_be"],["Belize","BZ","latin_america"],["Benin","BJ","west_africa"],["Bhutan","BT","india_north"],
+      ["Bolivia","BO","latin_america"],["Bosnia and Herzegovina","BA","balkans_gr"],["Botswana","BW","southern_africa"],["Brazil","BR","portugal_br"],
+      ["Brunei","BN","indonesia_my"],["Bulgaria","BG","balkans_gr"],["Burkina Faso","BF","west_africa"],["Burundi","BI","east_africa_sw"],
+      ["Cabo Verde","CV","portugal_br"],["Cambodia","KH","vietnam"],["Cameroon","CM","west_africa"],["Canada","CA","ca_en_fr"],
+      ["Central African Republic","CF","west_africa"],["Chad","TD","west_africa"],["Chile","CL","latin_america"],["China","CN","china"],
+      ["Colombia","CO","latin_america"],["Comoros","KM","east_africa_sw"],["Congo (Republic)","CG","west_africa"],["Costa Rica","CR","latin_america"],
+      ["Croatia","HR","balkans_gr"],["Cuba","CU","latin_america"],["Cyprus","CY","balkans_gr"],["Czech Republic","CZ","poland_cz_sk"],
+      ["Democratic Republic of the Congo","CD","east_africa_sw"],["Denmark","DK","nordic"],["Djibouti","DJ","horn_africa"],["Dominica","DM","caribbean"],
+      ["Dominican Republic","DO","latin_america"],["Ecuador","EC","latin_america"],["Egypt","EG","arab_mena"],["El Salvador","SV","latin_america"],
+      ["Equatorial Guinea","GQ","spain"],["Eritrea","ER","horn_africa"],["Estonia","EE","nordic"],["Eswatini","SZ","southern_africa"],
+      ["Ethiopia","ET","horn_africa"],["Fiji","FJ","pacific"],["Finland","FI","nordic"],["France","FR","france_be"],
+      ["Gabon","GA","west_africa"],["Gambia","GM","west_africa"],["Georgia","GE","turkey_caucasus"],["Germany","DE","germany_at_ch"],
+      ["Ghana","GH","west_africa"],["Greece","GR","balkans_gr"],["Grenada","GD","caribbean"],["Guatemala","GT","latin_america"],
+      ["Guinea","GN","west_africa"],["Guinea-Bissau","GW","portugal_br"],["Guyana","GY","caribbean"],["Haiti","HT","caribbean"],
+      ["Honduras","HN","latin_america"],["Hungary","HU","poland_cz_sk"],["Iceland","IS","nordic"],["India","IN","india_north"],
+      ["Indonesia","ID","indonesia_my"],["Iran","IR","iran_afg_tj"],["Iraq","IQ","arab_mena"],["Ireland","IE","uk_en"],
+      ["Israel","IL","arab_mena"],["Italy","IT","italy"],["Ivory Coast","CI","west_africa"],["Jamaica","JM","caribbean"],
+      ["Japan","JP","japan"],["Jordan","JO","arab_mena"],["Kazakhstan","KZ","russia_east_slav"],["Kenya","KE","east_africa_sw"],
+      ["Kiribati","KI","pacific"],["Kuwait","KW","arab_mena"],["Kyrgyzstan","KG","russia_east_slav"],["Laos","LA","thailand"],
+      ["Latvia","LV","nordic"],["Lebanon","LB","arab_mena"],["Lesotho","LS","southern_africa"],["Liberia","LR","west_africa"],
+      ["Libya","LY","arab_mena"],["Liechtenstein","LI","germany_at_ch"],["Lithuania","LT","nordic"],["Luxembourg","LU","france_be"],
+      ["Madagascar","MG","east_africa_sw"],["Malawi","MW","southern_africa"],["Malaysia","MY","indonesia_my"],["Maldives","MV","india_south"],
+      ["Mali","ML","west_africa"],["Malta","MT","italy"],["Marshall Islands","MH","pacific"],["Mauritania","MR","arab_mena"],
+      ["Mauritius","MU","india_north"],["Mexico","MX","latin_america"],["Micronesia","FM","pacific"],["Moldova","MD","balkans_gr"],
+      ["Monaco","MC","france_be"],["Mongolia","MN","china"],["Montenegro","ME","balkans_gr"],["Morocco","MA","arab_mena"],
+      ["Mozambique","MZ","portugal_br"],["Myanmar","MM","thailand"],["Namibia","NA","southern_africa"],["Nauru","NR","pacific"],
+      ["Nepal","NP","india_north"],["Netherlands","NL","netherlands"],["New Zealand","NZ","au_nz"],["Nicaragua","NI","latin_america"],
+      ["Niger","NE","west_africa"],["Nigeria","NG","west_africa"],["North Korea","KP","korea"],["North Macedonia","MK","balkans_gr"],
+      ["Norway","NO","nordic"],["Oman","OM","arab_mena"],["Pakistan","PK","pakistan"],["Palau","PW","pacific"],
+      ["Palestine","PS","arab_mena"],["Panama","PA","latin_america"],["Papua New Guinea","PG","pacific"],["Paraguay","PY","latin_america"],
+      ["Peru","PE","latin_america"],["Philippines","PH","philippines"],["Poland","PL","poland_cz_sk"],["Portugal","PT","portugal_br"],
+      ["Qatar","QA","arab_mena"],["Romania","RO","balkans_gr"],["Russia","RU","russia_east_slav"],["Rwanda","RW","east_africa_sw"],
+      ["Saint Kitts and Nevis","KN","caribbean"],["Saint Lucia","LC","caribbean"],["Saint Vincent and the Grenadines","VC","caribbean"],["Samoa","WS","pacific"],
+      ["San Marino","SM","italy"],["Sao Tome and Principe","ST","portugal_br"],["Saudi Arabia","SA","arab_mena"],["Senegal","SN","west_africa"],
+      ["Serbia","RS","balkans_gr"],["Seychelles","SC","east_africa_sw"],["Sierra Leone","SL","west_africa"],["Singapore","SG","china"],
+      ["Slovakia","SK","poland_cz_sk"],["Slovenia","SI","balkans_gr"],["Solomon Islands","SB","pacific"],["Somalia","SO","horn_africa"],
+      ["South Africa","ZA","southern_africa"],["South Korea","KR","korea"],["South Sudan","SS","east_africa_sw"],["Spain","ES","spain"],
+      ["Sri Lanka","LK","india_south"],["Sudan","SD","arab_mena"],["Suriname","SR","netherlands"],["Sweden","SE","nordic"],
+      ["Switzerland","CH","germany_at_ch"],["Syria","SY","arab_mena"],["Taiwan","TW","china"],["Tajikistan","TJ","iran_afg_tj"],
+      ["Tanzania","TZ","east_africa_sw"],["Thailand","TH","thailand"],["Timor-Leste","TL","portugal_br"],["Togo","TG","west_africa"],
+      ["Tonga","TO","pacific"],["Trinidad and Tobago","TT","caribbean"],["Tunisia","TN","arab_mena"],["Turkey","TR","turkey_caucasus"],
+      ["Turkmenistan","TM","turkey_caucasus"],["Tuvalu","TV","pacific"],["Uganda","UG","east_africa_sw"],["Ukraine","UA","russia_east_slav"],
+      ["United Arab Emirates","AE","arab_mena"],["United Kingdom","GB","uk_en"],["United States","US","us_en"],["Uruguay","UY","latin_america"],
+      ["Uzbekistan","UZ","turkey_caucasus"],["Vanuatu","VU","pacific"],["Vatican City","VA","italy"],["Venezuela","VE","latin_america"],
+      ["Vietnam","VN","vietnam"],["Yemen","YE","arab_mena"],["Zambia","ZM","southern_africa"],["Zimbabwe","ZW","southern_africa"]
+    ];
+
+    function seededShuffle(array, seedStr) {
+      let hash = 2166136261;
+      for (let i = 0; i < seedStr.length; i++) {
+        hash ^= seedStr.charCodeAt(i);
+        hash = Math.imul(hash, 16777619);
+      }
+      const copy = [...array];
+      for (let i = copy.length - 1; i > 0; i--) {
+        hash = (hash * 1664525 + 1013904223) >>> 0;
+        const j = hash % (i + 1);
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function isoToFlag(iso) {
+      return iso.toUpperCase().replace(/./g, (char) => String.fromCodePoint(127397 + char.charCodeAt(0)));
+    }
+
+    function generateUniqueFullNames(givenList, surnameList, countryCode, targetCount = 100) {
+      const combinations = new Set();
+      const shuffledGiven = seededShuffle(givenList, `${countryCode}_given`);
+      const shuffledSurnames = seededShuffle(surnameList, `${countryCode}_sur`);
+
+      for (let offset = 0; offset < shuffledSurnames.length; offset++) {
+        for (let i = 0; i < shuffledGiven.length; i++) {
+          const first = shuffledGiven[i];
+          const last = shuffledSurnames[(i + offset) % shuffledSurnames.length];
+          combinations.add(`${first} ${last}`);
+          if (combinations.size === targetCount) {
+            return Array.from(combinations);
+          }
+        }
+      }
+      return Array.from(combinations);
+    }
+
+    class ByteXNameGenerator {
+      constructor() {
+        this.countries = [];
+        this.selectedCountry = null;
+        this.selectedGender = 'male';
+        this.currentName = '';
+        this.decks = new Map();
+        this.toastTimer = null;
+
+        this.cacheDOM();
+        this.bindEvents();
+        this.initTheme();
+        this.buildDataset();
+      }
+
+      cacheDOM() {
+        this.loadingState = document.getElementById('loading-state');
+        this.workspace = document.getElementById('workspace');
+        this.dbStats = document.getElementById('db-stats');
+        this.countryCount = document.getElementById('country-count');
+        this.dropdown = document.getElementById('country-dropdown');
+        this.countryTrigger = document.getElementById('country-trigger');
+        this.selectedFlag = document.getElementById('selected-flag');
+        this.selectedName = document.getElementById('selected-name');
+        this.dropdownMenu = document.getElementById('dropdown-menu');
+        this.countrySearch = document.getElementById('country-search');
+        this.countryList = document.getElementById('country-list');
+        this.emptySearch = document.getElementById('empty-search');
+        this.btnMale = document.getElementById('btn-male');
+        this.btnFemale = document.getElementById('btn-female');
+        this.activeBadge = document.getElementById('active-badge');
+        this.poolCounter = document.getElementById('pool-counter');
+        this.nameDisplayBtn = document.getElementById('name-display-btn');
+        this.generatedNameEl = document.getElementById('generated-name');
+        this.btnCopy = document.getElementById('btn-copy');
+        this.btnNext = document.getElementById('btn-next');
+        this.copyToast = document.getElementById('copy-toast');
+        this.themeToggle = document.getElementById('theme-toggle');
+        this.iconSun = document.getElementById('theme-icon-sun');
+        this.iconMoon = document.getElementById('theme-icon-moon');
+      }
+
+      buildDataset() {
+        try {
+          this.countries = COUNTRIES_LIST.map(([name, iso, poolKey]) => {
+            const pool = CULTURE_POOLS[poolKey] || CULTURE_POOLS['us_en'];
+            const male = generateUniqueFullNames(pool.male, pool.surnames, `${iso}_M`, 100);
+            const female = generateUniqueFullNames(pool.female, pool.surnames, `${iso}_F`, 100);
+            return { name, iso, flag: isoToFlag(iso), male, female };
+          });
+
+          const totalNames = this.countries.reduce((sum, c) => sum + c.male.length + c.female.length, 0);
+          this.dbStats.textContent = `${this.countries.length} Countries • ${totalNames.toLocaleString()} Unique Names`;
+          this.countryCount.textContent = this.countries.length;
+
+          this.renderCountryList(this.countries);
+          const defaultCountry = this.countries.find((c) => c.iso === 'US') || this.countries[0];
+          this.selectCountry(defaultCountry);
+
+          this.loadingState.classList.add('hidden');
+          this.workspace.classList.remove('hidden');
+        } catch (err) {
+          this.loadingState.innerHTML = `<p>Unable to initialize dataset.</p>`;
+          console.error(err);
+        }
+      }
+
+      renderCountryList(list) {
+        this.countryList.innerHTML = '';
+        if (list.length === 0) {
+          this.emptySearch.classList.remove('hidden');
+          return;
+        }
+        this.emptySearch.classList.add('hidden');
+
+        const fragment = document.createDocumentFragment();
+        list.forEach((country) => {
+          const li = document.createElement('li');
+          li.className = 'country-item';
+          li.setAttribute('role', 'option');
+          if (this.selectedCountry && country.iso === this.selectedCountry.iso) {
+            li.classList.add('active');
+          }
+          li.innerHTML = `<span>${country.flag}</span><span>${country.name}</span>`;
+          li.addEventListener('click', () => {
+            this.selectCountry(country);
+            this.closeDropdown();
+          });
+          fragment.appendChild(li);
+        });
+        this.countryList.appendChild(fragment);
+      }
+
+      selectCountry(country) {
+        this.selectedCountry = country;
+        this.selectedFlag.textContent = country.flag;
+        this.selectedName.textContent = country.name;
+        this.generateNextName();
+      }
+
+      setGender(gender) {
+        if (this.selectedGender === gender) return;
+        this.selectedGender = gender;
+        this.btnMale.classList.toggle('active', gender === 'male');
+        this.btnFemale.classList.toggle('active', gender === 'female');
+        this.generateNextName();
+      }
+
+      generateNextName() {
+        if (!this.selectedCountry) return;
+        const key = `${this.selectedCountry.iso}_${this.selectedGender}`;
+        const fullPool = this.selectedCountry[this.selectedGender];
+
+        if (!this.decks.has(key) || this.decks.get(key).queue.length === 0) {
+          const shuffled = [...fullPool];
+          for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+          }
+          this.decks.set(key, { queue: shuffled, total: fullPool.length });
+        }
+
+        const deck = this.decks.get(key);
+        this.currentName = deck.queue.pop();
+        const usedCount = deck.total - deck.queue.length;
+
+        const genderLabel = this.selectedGender === 'male' ? 'Male' : 'Female';
+        this.activeBadge.textContent = `${this.selectedCountry.flag} ${this.selectedCountry.name} • ${genderLabel}`;
+        this.poolCounter.textContent = `${usedCount} / ${deck.total}`;
+        this.generatedNameEl.textContent = this.currentName;
+      }
+
+      async copyCurrentName() {
+        if (!this.currentName) return;
+        let copied = false;
+        if (navigator.clipboard && window.isSecureContext) {
+          try {
+            await navigator.clipboard.writeText(this.currentName);
+            copied = true;
+          } catch { copied = false; }
+        }
+        if (!copied) {
+          const textArea = document.createElement('textarea');
+          textArea.value = this.currentName;
+          textArea.style.position = 'fixed';
+          textArea.style.opacity = '0';
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+          try { copied = document.execCommand('copy'); } catch { copied = false; }
+          document.body.removeChild(textArea);
+        }
+        if (copied) this.showToast('Copied Successfully!');
+      }
+
+      showToast(message) {
+        this.copyToast.querySelector('span').textContent = message;
+        this.copyToast.classList.add('show');
+        clearTimeout(this.toastTimer);
+        this.toastTimer = setTimeout(() => this.copyToast.classList.remove('show'), 2000);
+      }
+
+      toggleDropdown() {
+        const isHidden = this.dropdownMenu.classList.contains('hidden');
+        if (isHidden) {
+          this.dropdownMenu.classList.remove('hidden');
+          this.countryTrigger.setAttribute('aria-expanded', 'true');
+          this.countrySearch.value = '';
+          this.renderCountryList(this.countries);
+          this.countrySearch.focus();
+        } else {
+          this.closeDropdown();
+        }
+      }
+
+      closeDropdown() {
+        this.dropdownMenu.classList.add('hidden');
+        this.countryTrigger.setAttribute('aria-expanded', 'false');
+      }
+
+      initTheme() {
+        const saved = localStorage.getItem('bytex_theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', saved);
+        this.updateThemeIcons(saved);
+      }
+
+      updateThemeIcons(theme) {
+        this.iconSun.classList.toggle('hidden', theme === 'dark');
+        this.iconMoon.classList.toggle('hidden', theme === 'light');
+      }
+
+      bindEvents() {
+        this.countryTrigger.addEventListener('click', () => this.toggleDropdown());
+        this.countrySearch.addEventListener('input', (e) => {
+          const term = e.target.value.trim().toLowerCase();
+          const filtered = this.countries.filter((c) => c.name.toLowerCase().includes(term));
+          this.renderCountryList(filtered);
+        });
+        document.addEventListener('click', (e) => {
+          if (!this.dropdown.contains(e.target)) this.closeDropdown();
+        });
+        this.btnMale.addEventListener('click', () => this.setGender('male'));
+        this.btnFemale.addEventListener('click', () => this.setGender('female'));
+        this.nameDisplayBtn.addEventListener('click', () => this.copyCurrentName());
+        this.btnCopy.addEventListener('click', () => this.copyCurrentName());
+        this.btnNext.addEventListener('click', () => this.generateNextName());
+        this.themeToggle.addEventListener('click', () => {
+          const current = document.documentElement.getAttribute('data-theme');
+          const next = current === 'dark' ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('bytex_theme', next);
+          this.updateThemeIcons(next);
+        });
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => new ByteXNameGenerator());
+  </script>
+</body>
+    </html>
